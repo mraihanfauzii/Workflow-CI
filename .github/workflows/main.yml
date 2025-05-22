@@ -36,7 +36,7 @@ jobs:
       - name: Get MLflow run_id
         id: get_run
         run: |
-          RUN_ID=$(ls -dt mlruns/0/*/ | head -n1 | xargs basename)
+          RUN_ID=$(ls -dt MLProject/mlruns/0/*/ | head -n1 | xargs basename)
           echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
 
       - name: Commit MLflow artifacts
