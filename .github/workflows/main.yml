@@ -2,6 +2,7 @@ name: CI Retrain Model
 
 permissions:
   contents: write
+  actions: read
 
 on:
   push:
@@ -44,7 +45,7 @@ jobs:
           echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
 
       - name: Upload MLflow run artefact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: mlflow-run-${{ steps.get_run.outputs.run_id }}
           path: MLProject/mlruns/0/${{ steps.get_run.outputs.run_id }}
