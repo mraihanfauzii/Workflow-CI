@@ -3,6 +3,7 @@ name: CI Retrain Model
 permissions:
   contents: write
   actions: read
+  metadata: read 
 
 on:
   push:
