@@ -60,6 +60,12 @@ jobs:
         with:
           persist-credentials: true
 
+      - name: Download trained model artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: mlflow-run-${{ needs.retrain.outputs.RUN_ID }}
+          path: ./mlflow_model
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
