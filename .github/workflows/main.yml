@@ -31,7 +31,7 @@ jobs:
 
       - name: Retrain model via MLflow Project
         run: |
-          mlflow run MLProject -e retrain --env-manager=local
+          mlflow run MLProject -e retrain --env-manager=local --experiment-name HousePrice_Tuning
 
       - name: Get MLflow run_id
         id: get_run
