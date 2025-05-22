@@ -65,7 +65,7 @@ jobs:
       - name: Build Docker image from MLflow model
         run: |
           mlflow models build-docker \
-            --model-uri "file://$(pwd)/mlruns/0/${{ needs.retrain.outputs.RUN_ID }}/artifacts/model" \
+            --model-uri "file://$(pwd)/MLProject/mlruns/0/${{ needs.retrain.outputs.RUN_ID }}/artifacts/model" \
             --name house-price-ci
 
       - name: Tag & push Docker image
