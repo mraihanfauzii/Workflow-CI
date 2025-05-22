@@ -43,18 +43,11 @@ jobs:
           RUN_ID=$(ls -dt MLProject/mlruns/0/*/ | head -n1 | xargs basename)
           echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
 
-      - name: Configure Git for commit
-        run: |
-          git config user.name "${{ secrets.GIT_USERNAME }}"
-          git config user.email "${{ secrets.GIT_EMAIL }}"
-
-      - name: Commit MLflow artifacts
-        run: |
-          git add MLProject/mlruns/0/${{ steps.get_run.outputs.run_id }}
-          git commit -m "✅ Add mlruns for RUN ${{ steps.get_run.outputs.run_id }}" || echo "Nothing to commit"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload MLflow run artefact
+        uses: actions/upload-artifact@v3
+        with:
+          name: mlflow-run-${{ steps.get_run.outputs.run_id }}
+          path: MLProject/mlruns/0/${{ steps.get_run.outputs.run_id }}
 
   docker_build_and_push:
     needs: retrain
