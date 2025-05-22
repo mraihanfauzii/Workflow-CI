@@ -8,42 +8,67 @@ on:
 jobs:
   retrain:
     runs-on: ubuntu-22.04
+    outputs:
+      RUN_ID: ${{ steps.get_run.outputs.run_id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          persist-credentials: true 
+          fetch-depth: 0
 
       - name: Setup Miniconda (Python 3.12.7)
         uses: conda-incubator/setup-miniconda@v2
         with:
           python-version: "3.12.7"
-          activate-environment: mlflow-env
+          auto-activate-base: false
           environment-file: MLProject/conda.yaml
+          activate-environment: mlflow-env
 
-      - name: Install MLflow CLI
-        run: pip install mlflow==2.19.0
+      - name: Install MLflow
+        run: |
+          pip install mlflow==2.19.0
 
-      - name: Run MLflow Project
-        run: mlflow run MLProject -e retrain
+      - name: Retrain model via MLflow Project
+        run: |
+          mlflow run MLProject -e retrain --env-manager=local
 
-      - name: Upload model artifact
-        uses: actions/upload-artifact@v3.1.2
-        with:
-          name: trained-model
-          path: mlruns/0/*/artifacts/model
+      - name: Get MLflow run_id
+        id: get_run
+        run: |
+          RUN_ID=$(ls -dt mlruns/0/*/ | head -n1 | xargs basename)
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+
+      - name: Commit MLflow artifacts
+        run: |
+          git add mlruns/0/${{ steps.get_run.outputs.run_id }}
+          git commit -m "✅ Add mlruns for RUN ${{ steps.get_run.outputs.run_id }}" || echo "Nothing to commit"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docker_build_and_push:
     needs: retrain
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code (for Dockerfile & mlruns)
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
 
-      - name: Login to Docker Hub
+      - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build Docker image from MLflow model
         run: |
-          docker build -t mraihanfauzii/house-price-ci:${{ github.run_number }} .
-          docker push mraihanfauzii/house-price-ci:${{ github.run_number }}
+          mlflow models build-docker \
+            --model-uri "file://$(pwd)/mlruns/0/${{ needs.retrain.outputs.RUN_ID }}/artifacts/model" \
+            --name house-price-ci
+
+      - name: Tag & push Docker image
+        run: |
+          docker tag house-price-ci:latest mraihanfauzii/house-price-ci:run-${{ github.run_number }}
+          docker push mraihanfauzii/house-price-ci:run-${{ github.run_number }}
