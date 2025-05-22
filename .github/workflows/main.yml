@@ -31,7 +31,8 @@ jobs:
 
       - name: Retrain model via MLflow Project
         run: |
-          mlflow run MLProject -e retrain --env-manager=local --experiment-name HousePrice_Tuning
+          cd MLProject
+          python modelling_tuning.py
 
       - name: Get MLflow run_id
         id: get_run
@@ -41,7 +42,7 @@ jobs:
 
       - name: Commit MLflow artifacts
         run: |
-          git add mlruns/0/${{ steps.get_run.outputs.run_id }}
+          git add MLProject/mlruns/0/${{ steps.get_run.outputs.run_id }}
           git commit -m "✅ Add mlruns for RUN ${{ steps.get_run.outputs.run_id }}" || echo "Nothing to commit"
           git push
         env:
