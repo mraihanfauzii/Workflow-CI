@@ -1,0 +1,7 @@
+name: house_price_ci
+conda_env: conda.yaml
+
+entry_points:
+  retrain:
+    parameters: {}
+    command: "python modelling_tuning.py"

@@ -1,0 +1,50 @@
+name: CI Retrain Model
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Miniconda (Python 3.12.7)
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: "3.12.7"
+          activate-environment: mlflow-env
+          environment-file: MLProject/conda.yaml
+
+      - name: Install MLflow CLI
+        run: |
+          pip install mlflow==2.19.0
+
+      - name: Run MLflow Project
+        run: mlflow run MLProject -e retrain
+
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: trained-model
+          path: mlruns/0/*/artifacts/model
+
+  docker_build_and_push:
+    needs: retrain
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t mraihanfauzii/house-price-ci:${{ github.run_number }} .
+          docker push mraihanfauzii/house-price-ci:${{ github.run_number }}
