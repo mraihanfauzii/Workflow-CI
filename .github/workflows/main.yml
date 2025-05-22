@@ -13,21 +13,19 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Miniconda (Python 3.12.7)
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v2.2.2
         with:
           python-version: "3.12.7"
-          activate-environment: mlflow-env
           environment-file: MLProject/conda.yaml
 
       - name: Install MLflow CLI
-        run: |
-          pip install mlflow==2.19.0
+        run: pip install mlflow==2.19.0
 
       - name: Run MLflow Project
         run: mlflow run MLProject -e retrain
 
       - name: Upload model artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: trained-model
           path: mlruns/0/*/artifacts/model
